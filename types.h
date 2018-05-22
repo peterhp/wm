@@ -21,9 +21,9 @@ typedef uint32              dword;
 typedef uint64              qword;
 
 #ifndef __cplusplus
-typedef uint8 bool;
-#define true    ((uint)1)
-#define false   ((uint)0)
+typedef byte bool;
+#define true    ((byte)1)
+#define false   ((byte)0)
 #endif
 
 #endif // types.h

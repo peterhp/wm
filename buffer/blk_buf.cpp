@@ -3,12 +3,12 @@
 #include <string.h>
 
 #include "types.h"
-#include "micros.h"
+#include "macros.h"
 #include "buffer/buffer.h"
 
-BlockBuffer::BlockBuffer(uint buf_size) {
-    max_size = MAX(buf_size, BUFFER_SIZE_MIN);
-    buf = (byte *)malloc(sizeof(byte) * max_size);
+BlockBuffer::BlockBuffer(uint init_size) {
+    max_size = MAX(init_size, BUFFER_SIZE_MIN);
+    buf = (byte *)malloc(sizeof(byte) * ALIGN_SIZE(max_size));
     size = 0;
 }
 
@@ -28,15 +28,15 @@ uint BlockBuffer::free_size() const {
     return max_size - size;
 }
 
-uint BlockBuffer::peek(byte *dst, uint max_len) const {
-    uint len = MIN(size, max_len);
+uint BlockBuffer::peek(byte *dst, uint dlen) const {
+    uint len = MIN(size, dlen);
 
     memcpy(dst, buf, sizeof(byte) * len);
     return len;
 }
 
-uint BlockBuffer::read(byte *dst, uint max_len) {
-    uint len = MIN(size, max_len);
+uint BlockBuffer::read(byte *dst, uint dlen) {
+    uint len = MIN(size, dlen);
 
     memcpy(dst, buf, sizeof(byte) * len);
 
@@ -46,15 +46,15 @@ uint BlockBuffer::read(byte *dst, uint max_len) {
     return len;
 }
 
-uint BlockBuffer::write(const byte *src, uint len) {
-    if (size + len > max_size) {
-        expand(size + len);
+uint BlockBuffer::write(const byte *src, uint slen) {
+    if (size + slen > max_size) {
+        expand(size + slen);
     }
 
-    memcpy(buf + size, src, sizeof(byte) * len);
-    size += len;
+    memcpy(buf + size, src, sizeof(byte) * slen);
+    size += slen;
 
-    return len;
+    return slen;
 }
 
 void BlockBuffer::expand(uint min_size) {
@@ -62,5 +62,5 @@ void BlockBuffer::expand(uint min_size) {
         max_size *= 2;
     }
 
-    buf = (byte *)realloc(buf, sizeof(byte) * max_size);
+    buf = (byte *)realloc(buf, sizeof(byte) * ALIGN_SIZE(max_size));
 }
