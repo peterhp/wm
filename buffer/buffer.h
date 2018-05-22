@@ -26,7 +26,7 @@ class Buffer {
 
 class BlockBuffer : public Buffer {
     public: 
-        BlockBuffer(uint buf_size = BUFFER_SIZE_1K);
+        BlockBuffer(uint buf_size = BUFFER_SIZE_MIN);
         ~BlockBuffer();
 
         uint buf_size() const;

@@ -2,7 +2,10 @@ EXE = app
 VER = 0.1.1
 
 CXX = g++
-CXX_FLAGS = -I.
+LD	= g++
+CXX_FLAGS = -I. -Wall
+
+BUILD_DIR = build
 
 DIRS = $(shell find . -type d)
 SRCS = $(foreach dir,$(DIRS),$(wildcard $(dir)/*.cpp))
@@ -16,11 +19,14 @@ print:
 	@echo Source Files: $(SRCS)
 	@echo Object Files: $(OBJS)
 
+pt:
+	$(wildcard **.cpp)
+
 .PHONY: build
 build: $(EXE)
 
 $(EXE): $(OBJS)
-	$(CXX) $(OBJS) -o $(EXE)
+	$(LD) $(OBJS) -o $(EXE)
 
 $(OBJS): %.o: %.cpp
 	$(CXX) $(CXX_FLAGS) -c $< -o $@

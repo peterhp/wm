@@ -4,23 +4,22 @@
 #include "micros.h"
 #include "buffer/buffer.h"
 
-const char *sent = "It's a test for the implimentation of buffer.\n";
-uint sent_len = strlen(sent);
+static const char *sent = "It's a test for the implimentation of buffer.\n";
+static uint sent_len = strlen(sent);
 
-void print_stat(const Buffer *buffer) {
+static void print_stat(const Buffer *buffer) {
     char data[1024 * 4];
     memset(data, 0, sizeof(data));
-    uint len = buffer->peek((byte *)data, ARRAY_SIZE(data));
+    buffer->peek((byte *)data, ARRAY_SIZE(data));
 
     printf("Data: %d / %d\n", buffer->data_size(), buffer->buf_size());
     printf("Dump: \n%s\n", data);
 }
 
-int main(int argc, char *argv[]) {
+static void test_buffer(Buffer *buffer) {
     byte buf[1024];
 
-    Buffer *buffer = new BlockBuffer(BUFFER_SIZE_MIN);
-    printf("Init an empty buffer...\n");
+    printf("For current buffer...\n");
     print_stat(buffer);
 
     buffer->write((const byte *)sent, sent_len);
@@ -40,7 +39,13 @@ int main(int argc, char *argv[]) {
     buffer->read(buf, sent_len * 20);
     buffer->read(buf, sent_len * 20);
     printf("Read 40 sentences...\n");
-    print_stat(buffer);
+    print_stat(buffer);    
+}
+
+int main(int argc, char *argv[]) {
+    Buffer *buffer = new BlockBuffer(BUFFER_SIZE_MIN);
+
+    test_buffer(buffer);
 
     delete buffer;
 
