@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include "types.h"
-#include "macros.h"
+#include "util/macros.h"
 #include "buffer/buffer.h"
 
 CircularBuffer::CircularBuffer(uint init_size) {

@@ -9,6 +9,15 @@
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 #endif
 
+#ifndef DIV_FLOOR
+#define DIV_FLOOR(dividend, divisor) ((dividend) / (divisor))
+#endif
+
+#ifndef DIV_CEIL
+#define DIV_CEIL(dividend, divisor) \
+    ((dividend) / (divisor) + ((dividend) % (divisor) ? 1 : 0))
+#endif
+
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 #endif
@@ -18,8 +27,7 @@
 #endif
 
 #ifndef ALIGN_SIZE
-#define ALIGN_SIZE(size) \
-    (ALIGN_WIDTH * ((size) / ALIGN_WIDTH + ((size) % ALIGN_WIDTH ? 1 : 0)))
+#define ALIGN_SIZE(size) (ALIGN_WIDTH * DIV_CEIL(size, ALIGN_WIDTH))
 #endif
 
 #endif // macros.h

@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
-#include "macros.h"
+#include "util/macros.h"
 #include "buffer/buffer.h"
 
 static const char *sent = "It's a test for the implimentation of buffer.\n";
@@ -53,20 +54,13 @@ static void test_buffer(Buffer *buffer) {
     print_stat(buffer);
 }
 
+#include "protocol/wmp/wmp.h"
+
 int main(int argc, char *argv[]) {
-    Buffer *buffer = new BlockBuffer(BUFFER_SIZE_MIN);
 
-    test_buffer(buffer);
+    wmp_plist packs = build_wmp_packets(NULL);
 
-    delete buffer;
-
-    // printf("Align size of (%d) is %d.\n", 0, ALIGN_SIZE(0));
-    // printf("Align size of (%d) is %d.\n", 1, ALIGN_SIZE(1));
-    // printf("Align size of (%d) is %d.\n", 3, ALIGN_SIZE(3));
-    // printf("Align size of (%d) is %d.\n", 4, ALIGN_SIZE(4));
-    // printf("Align size of (%d) is %d.\n", 7, ALIGN_SIZE(7));
-    // printf("Align size of (%d) is %d.\n", 8, ALIGN_SIZE(8));
-    // printf("Align size of (%d) is %d.\n", 10, ALIGN_SIZE(10));
+    printf("%d\n", packs.count);
 
     return 0;
 }

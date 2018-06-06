@@ -2,7 +2,7 @@
 #define _QPT_HEADER_BUFFER_H_
 
 #include "types.h"
-#include "macros.h"
+#include "util/macros.h"
 
 #define BUFFER_SIZE_1K  (1024)
 #define BUFFER_SIZE_2K  (BUFFER_SIZE_1K * 2)
