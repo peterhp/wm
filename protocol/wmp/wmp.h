@@ -42,17 +42,26 @@ typedef struct wmp_packet {
     uint16  postfix;        // ED ED
 } wmp_pkt;
 
-//extern bool wmp_validate(const wmp_pack *pack);
+extern int wmp_pack_size(const byte *hdr, uint len);
 
 extern int wmp_serialize(byte *buf, const wmp_pkt *pkt, uint blen);
 extern int wmp_deserialize(wmp_pkt *pkt, const byte *data, uint blen);
 
 typedef struct wmp_packet_list {
     uint32 count;
-    wmp_pkt *plist;
+    wmp_pkt **plist;
 } wmp_plist;
 
-extern wmp_plist *build_wmp_packets(const wm_cxt *cxt);
+#define WMP_COMPOSE_UPDATED     0x1
+#define WMP_COMPOSE_COMPLETED   0x2
+#define WMP_COMPOSE_FAILED      -1
+
+// build wmp packets for data to send
+extern wmp_plist *wmp_build_packets(const wm_cxt *cxt);
+// compose data from received packets
+extern int wmp_compose_packet(wmp_plist *plist, wmp_pkt *pkt);
+extern void wmp_compose_data(wm_cxt *cxt, wmp_plist *plist);
+
 extern void destroy_wmp_packets(wmp_plist **plist);
 
 #ifdef __cplusplus

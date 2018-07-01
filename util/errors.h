@@ -8,5 +8,6 @@
 
 // deserialization
 #define ERROR_INVALID_PACKET_LEN    -301
+#define ERROR_INVALID_PACKET_DATA   -302
 
 #endif // errors.h

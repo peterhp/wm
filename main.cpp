@@ -4,7 +4,7 @@
 #include "protocol/wmp/wmp.h"
 
 int main(int argc, char *argv[]) {
-    wmp_plist packs = build_wmp_packets(NULL);
+    wmp_plist packs = wmp_build_packets(NULL);
 
     printf("%d\n", packs.count);
 

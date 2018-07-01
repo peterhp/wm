@@ -10,6 +10,15 @@
 
 #include "protocol/wmp/wmp.h"
 
+int wmp_pack_size(const byte *hdr, uint len) {
+    if (len < WMP_HEAD_LEN) {
+        return ERROR_INVALID_PACKET_LEN;
+    }
+
+    const wmp_pkt *pkg = (const wmp_pkt *)hdr;
+    return WMP_HEAD_LEN + pkg->data_len + WMP_TAIL_LEN;
+}
+
 int wmp_serialize(byte *buf, const wmp_pkt *pkt, uint blen) {
     uint len = WMP_HEAD_LEN + pkt->data_len + WMP_TAIL_LEN;
     if (blen < len) {
@@ -20,6 +29,12 @@ int wmp_serialize(byte *buf, const wmp_pkt *pkt, uint blen) {
     memcpy(buf + WMP_HEAD_LEN, pkt->data, pkt->data_len);
     memcpy(buf + WMP_HEAD_LEN + pkt->data_len, &pkt->postfix, 2);
     return len;
+}
+
+static bool wmp_validate(const wmp_pkt *pkt) {
+    return (pkt->prefix == WMP_PREFIX) && (pkt->postfix == WMP_POSTFIX)
+            && (pkt->packet_number < pkt->packet_count)
+            && (crc16(pkt->data, pkt->data_len) == pkt->check_sum);
 }
 
 int wmp_deserialize(wmp_pkt *pkt, const byte *data, uint blen) {
@@ -34,6 +49,10 @@ int wmp_deserialize(wmp_pkt *pkt, const byte *data, uint blen) {
 
     memcpy(pkt->data, data + WMP_HEAD_LEN, pkt->data_len);
     memcpy(&pkt->postfix, data + WMP_HEAD_LEN + pkt->data_len, 2);
+
+    if (!wmp_validate(pkt)) {
+        return ERROR_INVALID_PACKET_DATA;
+    }
 
     return (WMP_HEAD_LEN + pkt->data_len + WMP_TAIL_LEN);
 }
@@ -72,23 +91,80 @@ static uint wmp_pack(wmp_pkt *pkt, const wm_cxt *cxt, uint pnum, uint32 ts) {
     return pkt->data_len;
 }
 
-wmp_plist *build_wmp_packets(const wm_cxt *cxt) {
+wmp_plist *wmp_build_packets(const wm_cxt *cxt) {
     uint32 timestamp = (uint32)time(NULL);
 
     wmp_plist *pkts = (wmp_plist *)malloc(sizeof(wmp_plist));
     pkts->count = DIV_CEIL(cxt->dlen, WMP_MAX_DATA_SIZE);
-    pkts->plist = (wmp_pkt *)malloc(sizeof(wmp_pkt) * pkts->count);
+    pkts->plist = (wmp_pkt **)malloc(sizeof(wmp_pkt *) * pkts->count);
 
     for (int pi = 0; pi < pkts->count; ++pi) {
-        wmp_pack(pkts->plist + pi, cxt, pi, timestamp);
+        wmp_pkt *pkt = (wmp_pkt *)malloc(sizeof(wmp_pkt));
+        wmp_pack(pkt, cxt, pi, timestamp);
+
+        pkts->plist[pi] = pkt;
     }
 
     return pkts;
 }
 
+int wmp_compose_packet(wmp_plist *plist, wmp_pkt *pkt) {
+    if (plist->count <= 0) {
+        plist->count = pkt->packet_count;
+        plist->plist = (wmp_pkt **)malloc(sizeof(wmp_pkt *) * plist->count);
+        memset(plist->plist, 0, sizeof(wmp_pkt *) * plist->count);
+    }
+
+    if ((plist->count != pkt->packet_count) || (plist->plist[pkt->packet_number])) {
+        return WMP_COMPOSE_FAILED;
+    }
+
+    plist->plist[pkt->packet_number] = pkt;
+    for (int pi = 0; pi < plist->count; ++pi) {
+        if (!plist->plist[pi]) {
+            return WMP_COMPOSE_UPDATED;
+        }
+    }
+
+    return WMP_COMPOSE_COMPLETED;
+}
+
+static uint wmp_plist_data_len(const wmp_plist *plist) {
+    uint dlen = 0;
+    for (int pi = 0; pi < plist->count; ++pi) {
+        dlen += plist->plist[pi]->data_len;
+    }
+    return dlen;
+}
+
+void wmp_compose_data(wm_cxt *cxt, wmp_plist *plist) {
+    cxt->type = plist->plist[0]->packet_type;
+    memcpy(cxt->hub_id, plist->plist[0]->hub_id, WMD_SIZE_HUB_ID);
+    memcpy(cxt->wm_id, plist->plist[0]->wm_id, WMD_SIZE_WM_ID);
+
+    cxt->dlen = wmp_plist_data_len(plist);
+    cxt->data = (byte *)malloc(sizeof(byte) * cxt->dlen);
+
+    int len = 0;
+    for (int pi = 0; pi < plist->count; ++pi) {
+        wmp_pkt *pkt = plist->plist[pi];
+        memcpy(cxt->data + len, pkt->data, sizeof(byte) * pkt->data_len);
+        len += pkt->data_len;
+    }
+}
+
 void destroy_wmp_packets(wmp_plist **plist) {
     if (*plist) {
-        free((*plist)->plist);
+        wmp_plist *pkts = *plist;
+        if (pkts->count > 0) {
+            for (int pi = 0; pi < pkts->count; ++pi) {
+                if (pkts->plist[pi]) {
+                    free(pkts->plist[pi]);
+                }
+            }
+            free(pkts->plist);
+        }
+
         free(*plist);
         *plist = NULL;
     }

@@ -15,15 +15,14 @@ extern "C" {
 #define WMD_S2C_HEARTBEAT   0x81
 
 typedef struct wm_context {
-    byte    wm_id[WMD_SIZE_WM_ID];
-    byte    hub_id[WMD_SIZE_HUB_ID];
+    byte wm_id[WMD_SIZE_WM_ID];
+    byte hub_id[WMD_SIZE_HUB_ID];
 
     uint8 type;
 
-    uint16 dlen;
+    uint dlen;
     byte *data;
 } wm_cxt;
-
 
 #ifdef __cplusplus
 }
